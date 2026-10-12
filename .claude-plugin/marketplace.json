@@ -1,0 +1,5 @@
+{
+  "name": "session-activity",
+  "owner": { "name": "valois" },
+  "plugins": [{ "name": "session-activity", "source": "./" }]
+}

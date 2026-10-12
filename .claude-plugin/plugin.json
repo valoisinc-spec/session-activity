@@ -1,0 +1,9 @@
+{
+  "name": "session-activity",
+  "version": "0.1.0",
+  "description": "Status line showing elapsed time, tool calls and files edited this session",
+  "author": {
+    "name": "valois"
+  },
+  "types": "./types/index.d.ts"
+}

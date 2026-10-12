@@ -1,5 +1,5 @@
 import { expect, mock, test } from 'claude-code/testing'
-import type { On } from 'claude-code'
+import type { On, ToolCallResult } from 'claude-code'
 
 import { formatElapsed, lineDelta, settingsFrom } from '../hooks/register'
 
@@ -27,7 +27,9 @@ test('fills in default settings', async () => {
   expect(settingsFrom({ refreshSeconds: 1, showLines: false }).refreshSeconds).toBe(5)
 })
 
-const harness = (on: On) => {
+type Harness = { id?: () => string; tool?: (tool: string) => ToolCallResult }
+
+const harness = (on: On, h: Harness = {}) => {
   const clock = mock.clock(on)
   mock.store(on)
   const statuses: (string | undefined)[] = []
@@ -36,9 +38,9 @@ const harness = (on: On) => {
     return { value: undefined }
   })
   on('session.start', ($, e) => ({ cwd: e.cwd }))
-  on('session.id', () => ({ value: 'session-1' }))
+  on('session.id', () => ({ value: h.id?.() ?? 'session-1' }))
   on('command.register', ($, e) => ({ value: { command: e.name } }))
-  on('tool.call', () => ({ result: {}, text: 'ok' }))
+  on('tool.call', ($, e) => h.tool?.(e.tool) ?? { result: {}, text: 'ok' })
   return { clock, statuses }
 }
 
@@ -91,4 +93,48 @@ test('hides parts the settings turn off', { options: { showTime: false, showLine
   await $.session.start(start)
   await $.tool.call({ tool: 'Edit', file_path: '/a.ts', old_string: 'x', new_string: 'y' })
   expect(statuses.at(-1)).toBe('1 tool call · 1 file edited')
+})
+
+test('denied calls are not counted; errored edits count the call but not the file', async ($, on) => {
+  const { statuses } = harness(on, {
+    tool: (t): ToolCallResult =>
+      t === 'Bash'
+        ? { deny: 'no' }
+        : t === 'Edit'
+          ? { result: {}, text: 'failed', isError: true }
+          : { result: {}, text: 'ok' },
+  })
+  await $.session.start(start)
+  await $.tool.call({ tool: 'Bash', command: 'rm -rf /' })
+  await $.tool.call({ tool: 'Edit', file_path: '/a.ts', old_string: 'x', new_string: 'y' })
+  expect(statuses.at(-1)).toBe('⏱ 0m · 1 tool call · 0 files edited · +0/−0')
+})
+
+test('a second session.start (hot reload) keeps the start time and counts', async ($, on) => {
+  const { clock, statuses } = harness(on)
+  await $.session.start(start)
+  await $.tool.call({ tool: 'Read', file_path: '/a.ts' })
+  await clock.advance(5 * 60_000)
+  await $.session.start(start)
+  expect(statuses.at(-1)).toBe('⏱ 5m · 1 tool call · 0 files edited · +0/−0')
+})
+
+test('history keeps only the newest sessions', { options: { historySize: 2 } }, async ($, on) => {
+  let id = 's1'
+  harness(on, { id: () => id })
+  await $.session.start(start)
+  for (const next of ['s1', 's2', 's3']) {
+    id = next
+    await $.tool.call({ tool: 'Read', file_path: '/a.ts' })
+  }
+  const history = await $.command.run(activity('history'))
+  expect(history.text).toContain('Last 2 sessions')
+})
+
+test('turning every part off clears the status line', {
+  options: { showTime: false, showTools: false, showFiles: false, showLines: false },
+}, async ($, on) => {
+  const { statuses } = harness(on)
+  await $.session.start(start)
+  expect(statuses.at(-1)).toBeUndefined()
 })

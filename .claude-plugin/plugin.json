@@ -1,9 +1,51 @@
 {
   "name": "session-activity",
-  "version": "0.1.0",
-  "description": "Status line showing elapsed time, tool calls and files edited this session",
+  "version": "0.2.0",
+  "description": "Status line showing elapsed time, tool calls, files edited and lines changed this session, with per-session history",
   "author": {
     "name": "valois"
   },
-  "types": "./types/index.d.ts"
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "refreshSeconds": {
+      "type": "number",
+      "title": "Refresh interval (seconds)",
+      "description": "How often the elapsed time on the status line is refreshed",
+      "default": 30,
+      "min": 5,
+      "max": 600
+    },
+    "showTime": {
+      "type": "boolean",
+      "title": "Show elapsed time",
+      "description": "Include the elapsed session time on the status line",
+      "default": true
+    },
+    "showTools": {
+      "type": "boolean",
+      "title": "Show tool calls",
+      "description": "Include the tool call count on the status line",
+      "default": true
+    },
+    "showFiles": {
+      "type": "boolean",
+      "title": "Show files edited",
+      "description": "Include the edited file count on the status line",
+      "default": true
+    },
+    "showLines": {
+      "type": "boolean",
+      "title": "Show lines changed",
+      "description": "Include lines added and removed on the status line",
+      "default": true
+    },
+    "historySize": {
+      "type": "number",
+      "title": "Sessions kept in history",
+      "description": "How many past sessions /activity history remembers",
+      "default": 20,
+      "min": 1,
+      "max": 200
+    }
+  }
 }

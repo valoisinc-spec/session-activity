@@ -1,5 +1,13 @@
 {
   "name": "session-activity",
-  "owner": { "name": "valois" },
-  "plugins": [{ "name": "session-activity", "source": "./" }]
+  "description": "Status line showing elapsed time, tool calls and files edited in a Claude Code session",
+  "owner": {
+    "name": "valois"
+  },
+  "plugins": [
+    {
+      "name": "session-activity",
+      "source": "./"
+    }
+  ]
 }

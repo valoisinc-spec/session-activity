@@ -20,7 +20,7 @@ A Claude Code plugin that adds a status line showing what the current session ha
 At the prompt of a Claude Code terminal session:
 
 ```
-/plugin install session-activity --marketplace <owner>/session-activity
+/plugin install session-activity --marketplace valoisinc-spec/session-activity
 ```
 
 Answer `y` to add the marketplace, then pick a scope (user scope loads it in every session).
